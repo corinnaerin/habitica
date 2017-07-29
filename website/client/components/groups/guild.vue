@@ -1,6 +1,7 @@
 <template lang="pug">
 .row(v-if="group")
   group-form-modal
+  invite-modal
   .clearfix.col-8
     .row
       .col-6.title-details
@@ -40,7 +41,7 @@
         .button-container
           button.btn.btn-success(class='btn-success', v-if='!isMember') {{ $t('join') }}
         .button-container
-          button.btn.btn-primary(v-once) {{$t('invite')}}
+          button.btn.btn-primary(v-once, @click='showInviteModal()') {{$t('invite')}}
         .button-container
           button.btn.btn-primary(v-once, v-if='!isLeader') {{$t('messageGuildLeader')}}
         .button-container
@@ -136,12 +137,7 @@
           .toggle-down(@click="sections.challenges = !sections.challenges", v-if="!sections.challenges")
             .svg-icon(v-html="icons.downIcon")
       .section(v-if="sections.challenges")
-        .row.no-quest-section(v-if='!hasChallenges')
-          .col-12.text-center
-            .svg-icon(v-html="icons.challengeIcon")
-            h4(v-once) {{ $t('haveNoChallenges') }}
-            p(v-once) {{ $t('challengeDescription') }}
-            button.btn.btn-secondary(v-once) {{ $t('createChallenge') }}
+        group-challenges(:groupId='groupId')
     div.text-center
       button.btn.btn-primary(class='btn-danger', v-if='isMember') {{ $t('leave') }}
 </template>
@@ -355,7 +351,10 @@ import ownedQuestsModal from './ownedQuestsModal';
 import quests from 'common/script/content/quests';
 import percent from 'common/script/libs/percent';
 import groupFormModal from './groupFormModal';
+import inviteModal from './inviteModal';
+import memberModal from '../members/memberModal';
 import chatMessage from '../chat/chatMessages';
+import groupChallenges from '../challenges/groupChallenges';
 
 import bCollapse from 'bootstrap-vue/lib/components/collapse';
 import bCard from 'bootstrap-vue/lib/components/card';
@@ -369,7 +368,6 @@ import likedIcon from 'assets/svg/liked.svg';
 import reportIcon from 'assets/svg/report.svg';
 import gemIcon from 'assets/svg/gem.svg';
 import questIcon from 'assets/svg/quest.svg';
-import challengeIcon from 'assets/svg/challenge.svg';
 import informationIcon from 'assets/svg/information.svg';
 import questBackground from 'assets/svg/quest-background-border.svg';
 import upIcon from 'assets/svg/up.svg';
@@ -380,12 +378,15 @@ export default {
   props: ['groupId'],
   components: {
     membersModal,
+    memberModal,
     ownedQuestsModal,
     bCollapse,
     bCard,
     bTooltip,
     groupFormModal,
     chatMessage,
+    inviteModal,
+    groupChallenges,
   },
   directives: {
     bToggle,
@@ -401,7 +402,6 @@ export default {
         gem: gemIcon,
         liked: likedIcon,
         questIcon,
-        challengeIcon,
         information: informationIcon,
         questBackground,
         upIcon,
@@ -506,6 +506,9 @@ export default {
     updateGuild () {
       this.$store.state.editingGroup = this.group;
       this.$root.$emit('show::modal', 'guild-form');
+    },
+    showInviteModal () {
+      this.$root.$emit('show::modal', 'invite-modal');
     },
     async fetchGuild () {
       let group = await this.$store.dispatch('guilds:getGroup', {groupId: this.groupId});
